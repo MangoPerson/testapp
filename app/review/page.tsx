@@ -1,8 +1,9 @@
-import Title from '@/components/pagetitle'
+import Title from "@/components/text/title"
 
 export default function ReviewPage() {
     return (
-        <Title>Reviews</Title>
-
+        <div>
+            <Title>Reviews</Title>
+        </div>
     )
 }

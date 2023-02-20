@@ -1,24 +1,28 @@
 'use client';
-
-import { useState } from "react";
-import Title from "@/components/pagetitle";
+import Title from "@/components/text/title";
+import TextBox from "@/components/input/textbox";
+import Form from "@/components/input/form";
+import { FormData, pb } from '@/components/functions';
 
 export default function AddWord() {
-    const [word, setWord] = useState('');
-    const [reading, setReading] = useState('');
-    const [meaning, setMeaning] = useState('');
-    const [part, setPart] = useState('');
 
+    let fd = new FormData();
+
+    async function addWord(e: any) {
+        e.preventDefault();
+
+        console.log(fd.term)
+    }
 
     return (
-        <form>
-            <h3>Add a new Word</h3>
-            <input
-                type='text'
-                placeholder='Word'
-                value={word}
-                onChange={(e) => setWord(e.target.value)}
-            />
-        </form>
+        <>
+            <Title>Add a New Word</Title>
+            <Form data={fd} buttonText='Add Word' action={addWord}>
+                <TextBox id='term'>Term</TextBox>
+                <TextBox id='reading'>Reading</TextBox>
+                <TextBox id='meaning'>Meaning</TextBox>
+                <TextBox id='part'>Part of Speech</TextBox>
+            </Form>
+        </>
     )
 }
