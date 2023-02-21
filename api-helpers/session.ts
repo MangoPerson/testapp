@@ -1,6 +1,7 @@
 import SessionHandler from "./sessionHandler";
 import { pb } from "@/components/functions";
 
+// Queue implementation for utility, because TypeScript doesn't have one built in
 class Queue<T> {
     private _items: T[];
 
@@ -15,31 +16,44 @@ class Queue<T> {
     pop() {
         return this._items.pop();
     }
-
 }
 
+type notes = { meanings: string[], other: string[] }
+// Represents information about a term being learned or reviewed
 interface TermInfo {
     type: 'vocab' | 'kanji' | 'none';
     id: string;
     term: string;
     meanings: string[];
     readings: string[] | { on: string[], kun: string[] };
+
+    notes?: notes;
+    time?: Date;
+    level?: number;
+}
+
+function minutesFromNow(minutes: number) {
+    const date = new Date();
+    date.setMinutes(date.getMinutes() + minutes);
+
+    return date;
 }
 
 export class LearnSession {
     private items: Queue<TermInfo>;
-    private learned: TermInfo[] = [];
+    private completed: TermInfo[] = [];
     private current?: TermInfo;
-    private handler?: SessionHandler;
+    private apiKey: string;
 
+    // Default Info is necessary for when the queue runs out and something still needs to be returned
     private static readonly default: TermInfo = { type: 'none', id: '', term: '', meanings: [], readings: {on: [], kun: []}}
 
-    constructor(items: TermInfo[], handler?: SessionHandler) {
+    constructor(items: TermInfo[], apiKey: string) {
         this.items = new Queue(items);
-        this.handler = handler;
+        this.apiKey = apiKey;
     }
 
-    static async newKanji(apiKey: string, amount: number, handler: SessionHandler) {
+    static async newKanjiSession(apiKey: string, amount: number) {
         const data = await pb.collection('kanji').getList(1, amount, {
             filter: ""
         });
@@ -54,10 +68,10 @@ export class LearnSession {
             }
         } as TermInfo));
         
-        return new LearnSession(terms, handler);
+        return new LearnSession(terms, apiKey);
     }
 
-    static async newVocab(apiKey: string, amount: number) {
+    static async newVocabSession(apiKey: string, amount: number) {
         const data = await pb.collection('vocab').getList(1, amount, {
             filter: ""
         })
@@ -67,14 +81,34 @@ export class LearnSession {
         return this.current ? this.current : LearnSession.default;
     }
 
-    next() {
+    pushNext(notes: notes) {
         this.current = this.items.pop();
+
         if (!this.current) {
             this.end();
+            return;
         }
+
+        this.current.time = minutesFromNow(5);
+        this.current.level = 0;
+        this.completed.push(this.current);
+    }
+
+    getNext(notes: notes) {
+        this.pushNext(notes);
+        return this.getCurrent();
     }
 
     end() {
-
+        this.completed.forEach(e => {
+            pb.collection('reviews').create({
+                notes: e.notes,
+                level: 0,
+                review_time: e.time,
+                api_key: this.apiKey,
+                type: e.type,
+                review_id: e.id
+            })
+        })
     }
 }

@@ -1,7 +1,7 @@
 import { LearnSession } from "./session";
 
 export default class SessionHandler {
-    private sessions = new Map<string, LearnSession >();
+    private sessions = new Map<string, LearnSession>();
 
     constructor() {
 
@@ -12,6 +12,7 @@ export default class SessionHandler {
     }
 
     removeSession(id: string) {
+        this.sessions.get(id)?.end();
         this.sessions.delete(id);
     }
 }
