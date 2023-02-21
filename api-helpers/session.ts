@@ -75,6 +75,15 @@ export class LearnSession {
         const data = await pb.collection('vocab').getList(1, amount, {
             filter: ""
         })
+        const terms = data.items.map(e => ({
+            type: 'vocab',
+            id: e.id,
+            term: e.term,
+            meanings: e.meanings,
+            readings: e.readings
+        } as TermInfo));
+        
+        return new LearnSession(terms, apiKey);
     }
 
     getCurrent() {
@@ -99,7 +108,7 @@ export class LearnSession {
         return this.getCurrent();
     }
 
-    end() {
+    updateDB() {
         this.completed.forEach(e => {
             pb.collection('reviews').create({
                 notes: e.notes,
@@ -110,5 +119,9 @@ export class LearnSession {
                 review_id: e.id
             })
         })
-    }
+    }   
+}
+
+export class ReviewSession extends LearnSession {
+    
 }
